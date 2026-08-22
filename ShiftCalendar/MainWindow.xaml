@@ -9,6 +9,7 @@
     <Window.Resources>
         <converters:ShiftTypeToColorConverter x:Key="ShiftTypeToColorConverter"/>
         <converters:ShiftToTextConverter x:Key="ShiftToTextConverter"/>
+        <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
 
@@ -314,7 +315,18 @@
                                                     </Button.Style>
                                                 </Button>
 
-                                                <TextBlock Grid.Column="1" Text="{Binding ShiftName, Mode=OneWay}" VerticalAlignment="Center" FontWeight="Bold" FontSize="12"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding ShiftName, Mode=OneWay}" VerticalAlignment="Center" FontWeight="Bold" FontSize="12">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSubstituteRow}" Value="True">
+                                                                    <Setter Property="FontWeight" Value="Normal"/>
+                                                                    <Setter Property="Foreground" Value="#FF9800"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
                                             </Grid>
                                         </Grid>
 
@@ -360,6 +372,12 @@
                                                                         <Setter Property="BorderBrush" Value="#FF9800"/>
                                                                         <Setter Property="BorderThickness" Value="2"/>
                                                                         <Setter Property="Opacity" Value="0.6"/>
+                                                                    </DataTrigger>
+                                                                    <!-- Ячейка замещающего -->
+                                                                    <DataTrigger Binding="{Binding IsSubstituteCell}" Value="True">
+                                                                        <Setter Property="Background" Value="#FF9800"/>
+                                                                        <Setter Property="BorderBrush" Value="#FFB74D"/>
+                                                                        <Setter Property="BorderThickness" Value="2"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -417,7 +435,8 @@
                                                                 </MenuItem>
 
                                                                 <MenuItem Header="Назначить замещающего" Click="AssignSubstitute_Click" Tag="{Binding}"
-                 Background="Transparent" Foreground="#e0e0e0" Padding="20,10">
+                 Background="Transparent" Foreground="#e0e0e0" Padding="20,10"
+                 Visibility="{Binding IsSubstituteCell, Converter={StaticResource InverseBoolConverter}, ConverterParameter=Invert}">
                                                                     <MenuItem.Template>
                                                                         <ControlTemplate TargetType="MenuItem">
                                                                             <Border x:Name="Border" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">

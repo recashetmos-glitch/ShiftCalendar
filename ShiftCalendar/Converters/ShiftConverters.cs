@@ -67,4 +67,26 @@ namespace ShiftCalendar.Converters
             throw new NotImplementedException();
         }
     }
+
+    public class InverseBoolConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool b)
+            {
+                // Если передан параметр "Invert", инвертируем
+                if (parameter is string p && p == "Invert")
+                {
+                    return !b;
+                }
+                return !b;
+            }
+            return false;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
