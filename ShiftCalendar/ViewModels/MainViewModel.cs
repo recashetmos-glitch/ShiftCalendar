@@ -438,7 +438,7 @@ namespace ShiftCalendar.ViewModels
         {
             return status switch
             {
-                AbsenceType.Больничный => "Болезнь",
+                AbsenceType.Болезнь => "Болезнь",
                 AbsenceType.Отпуск => "Отпуск",
                 AbsenceType.Отгул => "Отгул",
                 _ => "Отсутствует"
