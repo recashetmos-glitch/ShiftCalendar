@@ -379,57 +379,6 @@ namespace ShiftCalendar.ViewModels
                 }
             }
 
-            // Добавляем строку для замещающих
-            AddSubstituteRows(cycleStartDate, daysInMonth);
-        }
-
-        private void AddSubstituteRows(DateTime cycleStartDate, int daysInMonth)
-        {
-            // Находим все записи о замещениях за этот месяц
-            var substitutes = _context.ShiftRecords
-                .Include(r => r.Employee)
-                .Where(r => r.IsSubstitute && 
-                           r.Date.Year == Year && 
-                           r.Date.Month == Month)
-                .GroupBy(r => r.EmployeeId)
-                .ToList();
-
-            foreach (var substituteGroup in substitutes)
-            {
-                var employee = substituteGroup.First().Employee;
-                if (employee == null) continue;
-
-                var row = new ShiftRowViewModel($"🔄 {employee.FullName} (Замещающий)", 0, this)
-                {
-                    EmployeeId = employee.Id,
-                    IsSubstituteRow = true
-                };
-
-                for (int day = 1; day <= daysInMonth; day++)
-                {
-                    var date = new DateTime(Year, Month, day);
-                    
-                    var record = substituteGroup.FirstOrDefault(r => r.Date.Date == date.Date);
-                    
-                    var cell = new DayCellViewModel(day, record?.Shift ?? ShiftType.Выходной, row, employee.Id, CurrentDay, AbsenceType.НаСмене)
-                    {
-                        HasSubstitute = false,
-                        IsSubstituteCell = record != null
-                    };
-
-                    if (record != null && record.OriginalEmployeeId.HasValue)
-                    {
-                        var originalEmployee = _context.Employees.Find(record.OriginalEmployeeId.Value);
-                        cell.SubstituteName = originalEmployee?.FullName;
-                        cell.Tooltip = $"{day} {MonthName}: Замещает {cell.SubstituteName}";
-                    }
-
-                    row.Cells.Add(cell);
-                }
-
-                ShiftRows.Add(row);
-            }
-
             // Добавляем строки для замещающих
             AddSubstituteRows(cycleStartDate, daysInMonth);
         }
