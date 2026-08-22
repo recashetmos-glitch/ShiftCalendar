@@ -1,0 +1,12 @@
+﻿<Application x:Class="ShiftCalendar.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:ShiftCalendar.Converters"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <converters:ShiftToColorConverter x:Key="ShiftToColorConverter"/>
+        <converters:ShiftToTextConverter x:Key="ShiftToTextConverter"/>
+        <converters:ShiftTypeToColorConverter x:Key="ShiftTypeToColorConverter"/>
+        <converters:AbsenceTypeToColorConverter x:Key="AbsenceTypeToColorConverter"/>
+    </Application.Resources>
+</Application>

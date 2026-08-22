@@ -1,0 +1,474 @@
+﻿<Window x:Class="ShiftCalendar.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:ShiftCalendar.ViewModels"
+        xmlns:converters="clr-namespace:ShiftCalendar.Converters"
+        Title="Сводный календарь смен" Height="700" Width="1200"
+        Background="#1a1a1a" Foreground="#e0e0e0">
+
+    <Window.Resources>
+        <converters:ShiftTypeToColorConverter x:Key="ShiftTypeToColorConverter"/>
+        <converters:ShiftToTextConverter x:Key="ShiftToTextConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Левая панель -->
+        <Border Grid.Column="0" Background="#252525" Padding="15" Margin="0,0,10,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Смены и сотрудники" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                    <Button Content="⚙️ Редактировать смены" Background="#4CAF50" Foreground="White" 
+                           Padding="10,8" Margin="0,0,0,15" Command="{Binding OpenEditTeamsCommand}"/>
+
+                    <ItemsControl ItemsSource="{Binding ShiftTeams}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#2a2a2a" CornerRadius="6" Padding="12" Margin="0,0,0,8">
+                                    <StackPanel>
+                                        <Grid Cursor="Hand" MouseLeftButtonUp="TeamHeader_Click" Tag="{Binding}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" 
+                                                      Text="{Binding Name, Mode=OneWay}" 
+                                                      FontWeight="Bold" 
+                                                      FontSize="13"
+                                                      VerticalAlignment="Center"/>
+
+                                            <TextBlock Grid.Column="1" FontSize="10" Foreground="#888" VerticalAlignment="Center" Margin="5,0,0,0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="▼"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsExpanded}" Value="False">
+                                                                <Setter Property="Text" Value="▶"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+
+                                        <StackPanel Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}" Margin="0,8,0,0">
+                                            <TextBlock Text="Сотрудники:" Foreground="#888" FontSize="10" Margin="0,0,0,4"/>
+                                            <ItemsControl ItemsSource="{Binding EmployeeNames, Mode=OneWay}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}" Foreground="#ccc" FontSize="11" Margin="0,0,0,2"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Легенда смен -->
+                    <Border Background="#2a2a2a" CornerRadius="8" Padding="12" Margin="0,15,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Легенда смен" FontWeight="Bold" Margin="0,0,0,10" FontSize="12"/>
+
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="25"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#d4a574" CornerRadius="3" Height="20"/>
+                                <TextBlock Grid.Column="1" Text="День (12ч)" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="11"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="25"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#5c6bc0" CornerRadius="3" Height="20"/>
+                                <TextBlock Grid.Column="1" Text="Ночь (4ч)" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="11"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="25"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#66bb6a" CornerRadius="3" Height="20"/>
+                                <TextBlock Grid.Column="1" Text="Утро (8ч)" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="11"/>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="25"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#424242" CornerRadius="3" Height="20" BorderBrush="#555" BorderThickness="1"/>
+                                <TextBlock Grid.Column="1" Text="Выходной" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="11"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Легенда статусов -->
+                    <Border Background="#2a2a2a" CornerRadius="8" Padding="12" Margin="0,10,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Статусы" FontWeight="Bold" Margin="0,0,0,10" FontSize="12"/>
+
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="25"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#4CAF50" CornerRadius="3" Height="20"/>
+                                <TextBlock Grid.Column="1" Text="На смене" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="11"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="25"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#2196F3" CornerRadius="3" Height="20"/>
+                                <TextBlock Grid.Column="1" Text="Отпуск" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="11"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="25"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#F44336" CornerRadius="3" Height="20"/>
+                                <TextBlock Grid.Column="1" Text="Больничный" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="11"/>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="25"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#FF9800" CornerRadius="3" Height="20"/>
+                                <TextBlock Grid.Column="1" Text="Отгул" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="11"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Правая панель -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Заголовок и навигация -->
+            <Border Grid.Row="0" Background="#252525" Padding="15" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Content="◀" Background="#3a3a3a" Foreground="White" 
+                           BorderThickness="0" Padding="12,8" FontSize="16"
+                           Command="{Binding PreviousMonthCommand}"/>
+
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding CurrentMonthView.MonthName, Mode=OneWay}" 
+                                  FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="2" Content="▶" Background="#3a3a3a" Foreground="White" 
+                           BorderThickness="0" Padding="12,8" FontSize="16"
+                           Command="{Binding NextMonthCommand}"/>
+
+                    <Button Grid.Column="3" Content="Сегодня" Background="#4CAF50" Foreground="White" 
+                           BorderThickness="0" Padding="12,8" FontSize="11" Margin="10,0,0,0"
+                           Command="{Binding GoToTodayCommand}"/>
+
+                    <Button Grid.Column="4" Content="Развернуть" Background="#2a2a2a" Foreground="#ccc" 
+                           BorderThickness="0" Padding="10,8" Margin="5,0,0,0" FontSize="11"
+                           Command="{Binding CurrentMonthView.ExpandAllCommand}"/>
+
+                    <Button Grid.Column="5" Content="Свернуть" Background="#2a2a2a" Foreground="#ccc" 
+                           BorderThickness="0" Padding="10,8" Margin="5,0,0,0" FontSize="11"
+                           Command="{Binding CurrentMonthView.CollapseAllCommand}"/>
+                </Grid>
+            </Border>
+
+            <!-- Календарь -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                         x:Name="CalendarScrollViewer">
+                <Border Background="#252525" CornerRadius="8" Padding="15" Margin="10">
+                    <StackPanel>
+                        <!-- Заголовок с итогами -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding CurrentMonthView.MonthName, Mode=OneWay}" 
+                                      FontWeight="Bold" FontSize="20"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Border Background="#2a2a2a" CornerRadius="4" Padding="12,6" Margin="0,0,8,0">
+                                    <TextBlock FontSize="12">
+                                        <Run Text="{Binding CurrentMonthView.TotalShifts, Mode=OneWay}" Foreground="#4CAF50"/>
+                                        <Run Text=" смен"/>
+                                    </TextBlock>
+                                </Border>
+                                <Border Background="#2a2a2a" CornerRadius="4" Padding="12,6">
+                                    <TextBlock FontSize="12">
+                                        <Run Text="{Binding CurrentMonthView.TotalHours, Mode=OneWay}" Foreground="#d4a574"/>
+                                        <Run Text=" часов"/>
+                                    </TextBlock>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Заголовки дней -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Смена" FontWeight="Bold" Foreground="#888" FontSize="11"/>
+                            <ItemsControl Grid.Column="1" ItemsSource="{Binding CurrentMonthView.DayHeaders, Mode=OneWay}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Rows="1"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <Border CornerRadius="3" Padding="2,1">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsCurrentDay}" Value="True">
+                                                                <Setter Property="Background" Value="#FFD700"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding Day}" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold" Width="22">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#ccc"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsCurrentDay}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#1a1a1a"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                            <TextBlock Text="{Binding DayOfWeek}" HorizontalAlignment="Center" Foreground="#888" FontSize="9" Width="22"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+
+                        <!-- Строки смен -->
+                        <ItemsControl ItemsSource="{Binding CurrentMonthView.ShiftRows, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,4">
+                                        <Grid Margin="0,0,0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="90"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Grid Grid.Column="0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="20"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <Button Grid.Column="0" Background="Transparent" Foreground="#4CAF50" BorderThickness="0" Padding="0" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Command="{Binding ParentMonth.ToggleShiftCommand}" CommandParameter="{Binding}">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Content" Value="▼"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsExpanded}" Value="False">
+                                                                    <Setter Property="Content" Value="▶"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+
+                                                <TextBlock Grid.Column="1" Text="{Binding ShiftName, Mode=OneWay}" VerticalAlignment="Center" FontWeight="Bold" FontSize="12"/>
+                                            </Grid>
+                                        </Grid>
+
+                                        <ItemsControl ItemsSource="{Binding Cells, Mode=OneWay}" Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <UniformGrid Rows="1"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Width="24" Height="34" Margin="1" CornerRadius="4"
+                                                            Background="{Binding Shift, Converter={StaticResource ShiftTypeToColorConverter}}"
+                                                            Cursor="Hand"
+                                                            MouseLeftButtonUp="Day_Click"
+                                                            MouseEnter="Day_MouseEnter"
+                                                            Tag="{Binding}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="BorderBrush" Value="Transparent"/>
+                                                                <Setter Property="BorderThickness" Value="0"/>
+                                                                <Setter Property="ToolTip" Value="{Binding Tooltip}"/>
+                                                                <Style.Triggers>
+                                                                    <!-- Текущий день -->
+                                                                    <DataTrigger Binding="{Binding IsCurrentDay}" Value="True">
+                                                                        <Setter Property="BorderBrush" Value="#FFD700"/>
+                                                                        <Setter Property="BorderThickness" Value="2.5"/>
+                                                                    </DataTrigger>
+                                                                    <!-- Отпуск -->
+                                                                    <DataTrigger Binding="{Binding EmployeeStatus}" Value="Отпуск">
+                                                                        <Setter Property="BorderBrush" Value="#2196F3"/>
+                                                                        <Setter Property="BorderThickness" Value="2"/>
+                                                                        <Setter Property="Opacity" Value="0.6"/>
+                                                                    </DataTrigger>
+                                                                    <!-- Больничный -->
+                                                                    <DataTrigger Binding="{Binding EmployeeStatus}" Value="Больничный">
+                                                                        <Setter Property="BorderBrush" Value="#F44336"/>
+                                                                        <Setter Property="BorderThickness" Value="2"/>
+                                                                        <Setter Property="Opacity" Value="0.6"/>
+                                                                    </DataTrigger>
+                                                                    <!-- Отгул -->
+                                                                    <DataTrigger Binding="{Binding EmployeeStatus}" Value="Отгул">
+                                                                        <Setter Property="BorderBrush" Value="#FF9800"/>
+                                                                        <Setter Property="BorderThickness" Value="2"/>
+                                                                        <Setter Property="Opacity" Value="0.6"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <Grid>
+                                                            <TextBlock Text="{Binding Day, Mode=OneWay}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                          Foreground="{Binding IsWorkDay, Converter={StaticResource ShiftToTextConverter}}"
+                          FontSize="11" FontWeight="Bold"/>
+                                                            <TextBlock Text="👤" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="8"
+                          Visibility="{Binding HasSubstitute, Converter={StaticResource BoolToVis}}"/>
+                                                        </Grid>
+                                                        <Border.ContextMenu>
+                                                            <ContextMenu Background="#2a2a2a" Foreground="#e0e0e0" BorderBrush="#444" 
+                 Padding="5" BorderThickness="1">
+                                                                <ContextMenu.Template>
+                                                                    <ControlTemplate TargetType="ContextMenu">
+                                                                        <Border Background="#2a2a2a" BorderBrush="#444" BorderThickness="1" CornerRadius="4">
+                                                                            <StackPanel IsItemsHost="True" Margin="0"/>
+                                                                        </Border>
+                                                                    </ControlTemplate>
+                                                                </ContextMenu.Template>
+
+                                                                <MenuItem Header="Изменить смену" Click="EditShift_Click" Tag="{Binding}"
+                 Background="Transparent" Foreground="#e0e0e0" Padding="20,10">
+                                                                    <MenuItem.Template>
+                                                                        <ControlTemplate TargetType="MenuItem">
+                                                                            <Border x:Name="Border" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                                                <ContentPresenter Content="{TemplateBinding Header}"/>
+                                                                            </Border>
+                                                                            <ControlTemplate.Triggers>
+                                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                                    <Setter TargetName="Border" Property="Background" Value="#3a3a3a"/>
+                                                                                </Trigger>
+                                                                            </ControlTemplate.Triggers>
+                                                                        </ControlTemplate>
+                                                                    </MenuItem.Template>
+                                                                </MenuItem>
+
+                                                                <Separator Background="#444" Margin="5,3"/>
+
+                                                                <MenuItem Header="Управление статусом" Click="ManageAbsence_Click"
+                 Background="Transparent" Foreground="#e0e0e0" Padding="20,10">
+                                                                    <MenuItem.Template>
+                                                                        <ControlTemplate TargetType="MenuItem">
+                                                                            <Border x:Name="Border" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                                                <ContentPresenter Content="{TemplateBinding Header}"/>
+                                                                            </Border>
+                                                                            <ControlTemplate.Triggers>
+                                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                                    <Setter TargetName="Border" Property="Background" Value="#3a3a3a"/>
+                                                                                </Trigger>
+                                                                            </ControlTemplate.Triggers>
+                                                                        </ControlTemplate>
+                                                                    </MenuItem.Template>
+                                                                </MenuItem>
+
+                                                                <MenuItem Header="Назначить замещающего" Click="AssignSubstitute_Click" Tag="{Binding}"
+                 Background="Transparent" Foreground="#e0e0e0" Padding="20,10">
+                                                                    <MenuItem.Template>
+                                                                        <ControlTemplate TargetType="MenuItem">
+                                                                            <Border x:Name="Border" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                                                <ContentPresenter Content="{TemplateBinding Header}"/>
+                                                                            </Border>
+                                                                            <ControlTemplate.Triggers>
+                                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                                    <Setter TargetName="Border" Property="Background" Value="#3a3a3a"/>
+                                                                                </Trigger>
+                                                                            </ControlTemplate.Triggers>
+                                                                        </ControlTemplate>
+                                                                    </MenuItem.Template>
+                                                                </MenuItem>
+
+                                                                <Separator Background="#444" Margin="5,3"/>
+
+                                                                <MenuItem Header="{Binding EmployeeStatus, Mode=OneWay, StringFormat='Статус: {0}'}" 
+                 IsEnabled="False" Background="Transparent" Foreground="#666" Padding="20,10">
+                                                                    <MenuItem.Template>
+                                                                        <ControlTemplate TargetType="MenuItem">
+                                                                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                                                <ContentPresenter Content="{TemplateBinding Header}"/>
+                                                                            </Border>
+                                                                        </ControlTemplate>
+                                                                    </MenuItem.Template>
+                                                                </MenuItem>
+
+                                                                <MenuItem Header="{Binding SubstituteName, Mode=OneWay, StringFormat='Замещающий: {0}'}" 
+                 IsEnabled="False" Background="Transparent" Foreground="#666" Padding="20,10"
+                 Visibility="{Binding HasSubstitute, Converter={StaticResource BoolToVis}}">
+                                                                    <MenuItem.Template>
+                                                                        <ControlTemplate TargetType="MenuItem">
+                                                                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                                                <ContentPresenter Content="{TemplateBinding Header}"/>
+                                                                            </Border>
+                                                                        </ControlTemplate>
+                                                                    </MenuItem.Template>
+                                                                </MenuItem>
+                                                            </ContextMenu>
+                                                        </Border.ContextMenu>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>
