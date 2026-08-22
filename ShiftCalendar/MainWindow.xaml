@@ -367,6 +367,12 @@
                                                                         <Setter Property="BorderBrush" Value="#FFB74D"/>
                                                                         <Setter Property="BorderThickness" Value="2"/>
                                                                     </DataTrigger>
+                                                                    <!-- Ячейка замещающего -->
+                                                                    <DataTrigger Binding="{Binding IsSubstituteCell}" Value="True">
+                                                                        <Setter Property="Background" Value="#FF9800"/>
+                                                                        <Setter Property="BorderBrush" Value="#FFB74D"/>
+                                                                        <Setter Property="BorderThickness" Value="2"/>
+                                                                    </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Border.Style>
