@@ -24,6 +24,8 @@ namespace ShiftCalendar.Views
             if (teams.Any())
             {
                 TeamSelector.SelectedIndex = 0;
+                // Явно загружаем сотрудников для первой смены
+                TeamSelector_SelectionChanged(null, null);
             }
 
             // Установка текущей даты по умолчанию
