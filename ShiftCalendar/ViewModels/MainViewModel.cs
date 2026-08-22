@@ -299,95 +299,132 @@ namespace ShiftCalendar.ViewModels
 
             foreach (var team in teams)
             {
-                // Создаём ОДНУ строку для всей команды (смены)
-                var row = new ShiftRowViewModel(team.Name, team.Id, this)
+                // Создаём строку для каждого сотрудника в команде
+                foreach (var employee in team.Employees)
                 {
-                    IsEmployeeRow = false
+                    var row = new ShiftRowViewModel(employee.FullName, team.Id, this)
+                    {
+                        EmployeeId = employee.Id,
+                        IsEmployeeRow = true
+                    };
+
+                    for (int day = 1; day <= daysInMonth; day++)
+                    {
+                        var date = new DateTime(Year, Month, day);
+
+                        var savedRecord = _context.ShiftRecords
+                            .FirstOrDefault(r => r.Date == date && r.EmployeeId == employee.Id);
+
+                        ShiftType shift;
+                        if (savedRecord != null)
+                        {
+                            shift = savedRecord.Shift;
+                        }
+                        else
+                        {
+                            int daysDiff = (date.Date - cycleStartDate.Date).Days - team.CycleOffset;
+                            int cycleDay = ((daysDiff % 4) + 4) % 4;
+
+                            shift = cycleDay switch
+                            {
+                                0 => ShiftType.День,
+                                1 => ShiftType.Ночь,
+                                2 => ShiftType.Утро,
+                                3 => ShiftType.Выходной,
+                                _ => ShiftType.Выходной
+                            };
+                        }
+
+                        var status = GetEmployeeStatus(employee.Id, date);
+                        var cell = new DayCellViewModel(day, shift, row, employee.Id, CurrentDay, status);
+
+                        // Проверяем, есть ли замещающий
+                        var substituteRecord = _context.ShiftRecords
+                            .FirstOrDefault(r => r.Date == date && r.OriginalEmployeeId == employee.Id && r.IsSubstitute);
+
+                        if (substituteRecord != null)
+                        {
+                            cell.HasSubstitute = true;
+                            var substitute = _context.Employees.Find(substituteRecord.EmployeeId);
+                            cell.SubstituteName = substitute?.FullName;
+                        }
+
+                        // Если сотрудник в отсутствии и нет замещающего — помечаем период
+                        if (status != AbsenceType.НаСмене && substituteRecord == null)
+                        {
+                            cell.IsInAbsencePeriod = true;
+                            var absence = GetAbsenceForEmployee(employee.Id, date);
+                            if (absence != null)
+                            {
+                                cell.AbsencePeriodInfo = $"{absence.StartDate:dd.MM} - {absence.EndDate:dd.MM}";
+                            }
+                        }
+
+                        row.Cells.Add(cell);
+
+                        if (shift != ShiftType.Выходной && status == AbsenceType.НаСмене)
+                        {
+                            TotalShifts++;
+                            TotalHours += shift switch
+                            {
+                                ShiftType.День => 12,
+                                ShiftType.Ночь => 4,
+                                ShiftType.Утро => 8,
+                                _ => 0
+                            };
+                        }
+                    }
+
+                    ShiftRows.Add(row);
+                }
+            }
+
+            // Добавляем строку для замещающих
+            AddSubstituteRows(cycleStartDate, daysInMonth);
+        }
+
+        private void AddSubstituteRows(DateTime cycleStartDate, int daysInMonth)
+        {
+            // Находим все записи о замещениях за этот месяц
+            var substitutes = _context.ShiftRecords
+                .Include(r => r.Employee)
+                .Where(r => r.IsSubstitute && 
+                           r.Date.Year == Year && 
+                           r.Date.Month == Month)
+                .GroupBy(r => r.EmployeeId)
+                .ToList();
+
+            foreach (var substituteGroup in substitutes)
+            {
+                var employee = substituteGroup.First().Employee;
+                if (employee == null) continue;
+
+                var row = new ShiftRowViewModel($"🔄 {employee.FullName} (Замещающий)", 0, this)
+                {
+                    EmployeeId = employee.Id,
+                    IsSubstituteRow = true
                 };
 
                 for (int day = 1; day <= daysInMonth; day++)
                 {
                     var date = new DateTime(Year, Month, day);
-
-                    // Определяем базовую смену по циклу
-                    int daysDiff = (date.Date - cycleStartDate.Date).Days - team.CycleOffset;
-                    int cycleDay = ((daysDiff % 4) + 4) % 4;
-
-                    var baseShift = cycleDay switch
+                    
+                    var record = substituteGroup.FirstOrDefault(r => r.Date.Date == date.Date);
+                    
+                    var cell = new DayCellViewModel(day, record?.Shift ?? ShiftType.Выходной, row, employee.Id, CurrentDay, AbsenceType.НаСмене)
                     {
-                        0 => ShiftType.День,
-                        1 => ShiftType.Ночь,
-                        2 => ShiftType.Утро,
-                        3 => ShiftType.Выходной,
-                        _ => ShiftType.Выходной
+                        HasSubstitute = false,
+                        IsSubstituteCell = record != null
                     };
 
-                    // Проверяем ручные изменения и отсутствия для каждого сотрудника смены
-                    var employeesInShift = new List<string>();
-                    var absenceInfo = new List<string>();
-                    bool hasAbsence = false;
-                    bool allOnShift = true;
-
-                    foreach (var employee in team.Employees)
+                    if (record != null && record.OriginalEmployeeId.HasValue)
                     {
-                        var savedRecord = _context.ShiftRecords
-                            .FirstOrDefault(r => r.Date == date && r.EmployeeId == employee.Id && !r.IsSubstitute);
-
-                        var status = GetEmployeeStatus(employee.Id, date);
-
-                        if (status != AbsenceType.НаСмене)
-                        {
-                            hasAbsence = true;
-                            allOnShift = false;
-                            absenceInfo.Add($"{employee.FullName}: {GetAbsenceName(status)}");
-                        }
-                        else
-                        {
-                            employeesInShift.Add(employee.FullName);
-                        }
-                    }
-
-                    // Формируем отображение для ячейки
-                    string cellContent = hasAbsence 
-                        ? $"{baseShift}\n({team.Employees.Count - absenceInfo.Count}/{team.Employees.Count})" 
-                        : baseShift.ToString();
-
-                    var cell = new DayCellViewModel(day, baseShift, row, team.Id, CurrentDay, AbsenceType.НаСмене)
-                    {
-                        DisplayName = cellContent,
-                        HasAbsence = hasAbsence,
-                        AbsenceDetails = absenceInfo.Any() ? string.Join("\n", absenceInfo) : "",
-                        EmployeeCount = team.Employees.Count,
-                        PresentCount = employeesInShift.Count
-                    };
-
-                    // Проверяем, есть ли замещающий
-                    var substituteRecord = _context.ShiftRecords
-                        .FirstOrDefault(r => r.Date == date && r.OriginalEmployeeId.HasValue && 
-                                            _context.Employees.Any(e => e.Id == r.OriginalEmployeeId.Value && e.ShiftTeamId == team.Id) &&
-                                            r.IsSubstitute);
-
-                    if (substituteRecord != null)
-                    {
-                        cell.HasSubstitute = true;
-                        var substitute = _context.Employees.Find(substituteRecord.EmployeeId);
-                        var original = _context.Employees.Find(substituteRecord.OriginalEmployeeId.Value);
-                        cell.SubstituteName = $"{substitute?.FullName} вместо {original?.FullName}";
+                        var originalEmployee = _context.Employees.Find(record.OriginalEmployeeId.Value);
+                        cell.SubstituteName = originalEmployee?.FullName;
+                        cell.Tooltip = $"{day} {MonthName}: Замещает {cell.SubstituteName}";
                     }
 
                     row.Cells.Add(cell);
-
-                    if (baseShift != ShiftType.Выходной && allOnShift)
-                    {
-                        TotalShifts++;
-                        TotalHours += baseShift switch
-                        {
-                            ShiftType.День => 12,
-                            ShiftType.Ночь => 4,
-                            ShiftType.Утро => 8,
-                            _ => 0
-                        };
-                    }
                 }
 
                 ShiftRows.Add(row);
@@ -568,13 +605,6 @@ namespace ShiftCalendar.ViewModels
         public bool IsInAbsencePeriod { get; set; }
         public string AbsencePeriodInfo { get; set; } = "";
         public bool IsSubstituteCell { get; set; }
-        
-        // Новые свойства для сводного отображения
-        public string DisplayName { get; set; } = "";
-        public bool HasAbsence { get; set; }
-        public string AbsenceDetails { get; set; } = "";
-        public int EmployeeCount { get; set; }
-        public int PresentCount { get; set; }
 
         [ObservableProperty]
         private ShiftType _shift;
