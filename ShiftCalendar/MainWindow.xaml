@@ -374,10 +374,10 @@
                                                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                 <TextBlock Text="{Binding Day, Mode=OneWay}" HorizontalAlignment="Center" 
                                               Foreground="{Binding Shift, Converter={StaticResource ShiftToTextConverter}}"
-                                              FontSize="10" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                                              FontSize="10" FontWeight="Bold"/>
                                                                 <TextBlock Text="{Binding DisplayName, Mode=OneWay}" HorizontalAlignment="Center" 
                                               Foreground="{Binding Shift, Converter={StaticResource ShiftToTextConverter}}"
-                                              FontSize="8" HorizontalContentAlignment="Center" Visibility="{Binding HasAbsence, Converter={StaticResource BoolToVis}}"/>
+                                              FontSize="8" Visibility="{Binding HasAbsence, Converter={StaticResource BoolToVis}}"/>
                                                             </StackPanel>
                                                             <TextBlock Text="👤" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="8"
                                           Visibility="{Binding HasSubstitute, Converter={StaticResource BoolToVis}}"/>
