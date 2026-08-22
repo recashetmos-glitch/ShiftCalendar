@@ -355,23 +355,17 @@
                                                                         <Setter Property="BorderBrush" Value="#FFD700"/>
                                                                         <Setter Property="BorderThickness" Value="2.5"/>
                                                                     </DataTrigger>
-                                                                    <!-- Отпуск -->
-                                                                    <DataTrigger Binding="{Binding EmployeeStatus}" Value="Отпуск">
-                                                                        <Setter Property="BorderBrush" Value="#2196F3"/>
-                                                                        <Setter Property="BorderThickness" Value="2"/>
-                                                                        <Setter Property="Opacity" Value="0.6"/>
-                                                                    </DataTrigger>
-                                                                    <!-- Больничный -->
-                                                                    <DataTrigger Binding="{Binding EmployeeStatus}" Value="Больничный">
+                                                                    <!-- Есть отсутствующие в смене -->
+                                                                    <DataTrigger Binding="{Binding HasAbsence}" Value="True">
                                                                         <Setter Property="BorderBrush" Value="#F44336"/>
                                                                         <Setter Property="BorderThickness" Value="2"/>
-                                                                        <Setter Property="Opacity" Value="0.6"/>
+                                                                        <Setter Property="ToolTip" Value="{Binding AbsenceDetails}"/>
                                                                     </DataTrigger>
-                                                                    <!-- Отгул -->
-                                                                    <DataTrigger Binding="{Binding EmployeeStatus}" Value="Отгул">
-                                                                        <Setter Property="BorderBrush" Value="#FF9800"/>
+                                                                    <!-- Ячейка замещающего -->
+                                                                    <DataTrigger Binding="{Binding IsSubstituteCell}" Value="True">
+                                                                        <Setter Property="Background" Value="#FF9800"/>
+                                                                        <Setter Property="BorderBrush" Value="#FFB74D"/>
                                                                         <Setter Property="BorderThickness" Value="2"/>
-                                                                        <Setter Property="Opacity" Value="0.6"/>
                                                                     </DataTrigger>
                                                                     <!-- Ячейка замещающего -->
                                                                     <DataTrigger Binding="{Binding IsSubstituteCell}" Value="True">
@@ -383,11 +377,16 @@
                                                             </Style>
                                                         </Border.Style>
                                                         <Grid>
-                                                            <TextBlock Text="{Binding Day, Mode=OneWay}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                          Foreground="{Binding IsWorkDay, Converter={StaticResource ShiftToTextConverter}}"
-                          FontSize="11" FontWeight="Bold"/>
+                                                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Day, Mode=OneWay}" HorizontalAlignment="Center" 
+                                              Foreground="{Binding Shift, Converter={StaticResource ShiftToTextConverter}}"
+                                              FontSize="10" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                                                                <TextBlock Text="{Binding DisplayName, Mode=OneWay}" HorizontalAlignment="Center" 
+                                              Foreground="{Binding Shift, Converter={StaticResource ShiftToTextConverter}}"
+                                              FontSize="8" HorizontalContentAlignment="Center" Visibility="{Binding HasAbsence, Converter={StaticResource BoolToVis}}"/>
+                                                            </StackPanel>
                                                             <TextBlock Text="👤" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="8"
-                          Visibility="{Binding HasSubstitute, Converter={StaticResource BoolToVis}}"/>
+                                          Visibility="{Binding HasSubstitute, Converter={StaticResource BoolToVis}}"/>
                                                         </Grid>
                                                         <Border.ContextMenu>
                                                             <ContextMenu Background="#2a2a2a" Foreground="#e0e0e0" BorderBrush="#444" 

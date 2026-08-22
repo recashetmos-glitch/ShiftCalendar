@@ -11,6 +11,11 @@ obj/
 # Dependencies
 packages/
 node_modules/
+vendor/
+
+# IDE files
+.vs/
+*.userprefs
 bower_components/
 
 # Logs
