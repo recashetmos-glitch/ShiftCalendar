@@ -1,50 +1,40 @@
+```
 # Build artifacts
 bin/
 obj/
 *.exe
 *.dll
 *.pdb
-*.nupkg
+*.userprefs
+*.cache
+*.log
 
 # Dependencies
 packages/
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+vendor/
 
 # IDE
 .vs/
+.vshost/
+.user
+.suo
+.ReSharper/
 .vscode/
-*.userprefs
-*.userosscache
-*.suo
-*.user
-*.aps
-*.ncb
-*.opendb
-*.opensdf
+.idea/
 
 # OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 desktop.ini
 
-# Logs
-*.log
-
-# User-specific files
-*.userprefs
-*.userosscache
-.vsconfig
-.vscode/settings.json
-
-# Environment specific
+# Environment
 .env
 .env.local
 *.env.*
+
+# Test coverage
+coverage/
+*.coverage
+htmlcov/
+```
