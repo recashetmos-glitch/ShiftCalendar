@@ -45,7 +45,17 @@ namespace ShiftCalendar
                 if (cell.Day.HasValue)
                 {
                     var viewModel = DataContext as MainViewModel;
-                    viewModel?.EditShiftCommand.Execute(cell);
+                    
+                    // Если это строка смены (не замещающего), открываем диалог управления отсутствием
+                    if (cell.ParentRow != null && !cell.ParentRow.IsSubstituteRow)
+                    {
+                        viewModel?.ManageAbsenceCommand.Execute(null);
+                    }
+                    else
+                    {
+                        // Для замещающих или других случаев - редактирование смены
+                        viewModel?.EditShiftCommand.Execute(cell);
+                    }
                 }
             }
         }
